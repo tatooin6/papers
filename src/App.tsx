@@ -8,6 +8,17 @@ function App() {
   const [participantInput, setParticipantInput] = useState("");
   const [participants, setParticipants] = useState<string[]>([]);
 
+  const addFunction = () => {
+    setParticipants([...participants, participantInput]);
+    setParticipantInput("");
+  }
+
+  const removeItem = (index) => { 
+    const newArr = [ ...participants ];
+    newArr.splice(index, 1);
+    setParticipants(newArr);
+  }
+
   return (
     <>
       <section id="center">
@@ -29,7 +40,7 @@ function App() {
         <button
           type="button"
           className="counter"
-          onClick={() => setParticipants([...participants, participantInput])}
+          onClick={() => addFunction()}
         >
           Add
         </button>
@@ -43,77 +54,20 @@ function App() {
             <use href="/icons.svg#documentation-icon"></use>
           </svg>
           <h2>Participants</h2>
-          {participants.map((participant) => (
-            <p>{participant}</p>
+          {participants.map((participant, index) => (
+            <p>{(index+1)}. {participant} - 
+              <span className="clickable" onClick={() => removeItem(index)}>
+                [e]
+              </span>
+              <span className="clickable" onClick={() => removeItem(index)}>
+                [x]
+              </span>
+            </p>
           ))}
           <ul>
             <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
+              <a href="https://tato-portfolio.vercel.app/" target="_blank">
+                Visit Tato
               </a>
             </li>
           </ul>
