@@ -13,7 +13,7 @@ function App() {
     setParticipantInput("");
   }
 
-  const removeItem = (index) => { 
+  const removeItem = (index: number) => { 
     const newArr = [ ...participants ];
     newArr.splice(index, 1);
     setParticipants(newArr);
@@ -55,7 +55,7 @@ function App() {
           </svg>
           <h2>Participants</h2>
           {participants.map((participant, index) => (
-            <p>{(index+1)}. {participant} - 
+            <p key={`${participant}-${index}`}>{(index+1)}. {participant} - 
               <span className="clickable" onClick={() => removeItem(index)}>
                 [e]
               </span>
