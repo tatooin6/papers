@@ -1,32 +1,56 @@
 import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "./assets/vite.svg";
-import heroImg from "./assets/hero.png";
 import "./App.css";
 
 function App() {
   const [participantInput, setParticipantInput] = useState("");
   const [participants, setParticipants] = useState<string[]>([]);
+  const [editIndex, setEditIndex] = useState<number>();
+  const [editing, setEditing] = useState(false);
 
   const addFunction = () => {
+    if (participantInput === "") return;
     setParticipants([...participants, participantInput]);
     setParticipantInput("");
-  }
+  };
 
-  const removeItem = (index: number) => { 
-    const newArr = [ ...participants ];
+  const removeItem = (index: number) => {
+    const newArr = [...participants];
     newArr.splice(index, 1);
     setParticipants(newArr);
-  }
+  };
+
+  const editParticipant = (index: number) => {
+    setEditing(true);
+    setEditIndex(index);
+    const toEdit = participants[index];
+    setParticipantInput(toEdit);
+  };
+
+  const editParticipantName = () => {
+    const tempParticipants = [...participants];
+    if (typeof editIndex === "undefined") return;
+    tempParticipants[editIndex] = participantInput;
+    setParticipants(tempParticipants);
+    setParticipantInput("");
+    setEditing(false);
+  };
+
+  const sortParticipants = () => {
+    if (participants.length === 0) {
+      console.log("more elements are needed");
+      return;
+    }
+    const array = [...participants];
+    for (let i = array.length - 1; i > 0; i--) {
+      let j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    setParticipants(array);
+  };
 
   return (
     <>
       <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
         <div>
           <h1>Papers</h1>
           <p>Insert a participant name:</p>
@@ -37,13 +61,24 @@ function App() {
             onChange={(e) => setParticipantInput(e.target.value)}
           />
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => addFunction()}
-        >
-          Add
-        </button>
+        {!editing && (
+          <button
+            type="button"
+            className="counter"
+            onClick={() => addFunction()}
+          >
+            Add
+          </button>
+        )}
+        {editing && (
+          <button
+            type="button"
+            className="counter"
+            onClick={() => editParticipantName()}
+          >
+            Edit
+          </button>
+        )}
       </section>
 
       <div className="ticks"></div>
@@ -55,8 +90,12 @@ function App() {
           </svg>
           <h2>Participants</h2>
           {participants.map((participant, index) => (
-            <p key={`${participant}-${index}`}>{(index+1)}. {participant} - 
-              <span className="clickable" onClick={() => removeItem(index)}>
+            <p key={`${participant}-${index}`}>
+              {index + 1}. {participant} -
+              <span
+                className="clickable"
+                onClick={() => editParticipant(index)}
+              >
                 [e]
               </span>
               <span className="clickable" onClick={() => removeItem(index)}>
@@ -64,6 +103,14 @@ function App() {
               </span>
             </p>
           ))}
+          <button
+            type="button"
+            className="counter"
+            onClick={() => sortParticipants()}
+            disabled={true}
+          >
+            Sort
+          </button>
           <ul>
             <li>
               <a href="https://tato-portfolio.vercel.app/" target="_blank">
