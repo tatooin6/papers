@@ -42,7 +42,7 @@ function App() {
     }
     const array = [...participants];
     for (let i = array.length - 1; i > 0; i--) {
-      let j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
     setParticipants(array);
@@ -85,9 +85,6 @@ function App() {
 
       <section id="next-steps">
         <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
           <h2>Participants</h2>
           {participants.map((participant, index) => (
             <p key={`${participant}-${index}`}>
@@ -107,7 +104,7 @@ function App() {
             type="button"
             className="counter"
             onClick={() => sortParticipants()}
-            disabled={true}
+            disabled={participants.length<2}
           >
             Sort
           </button>
