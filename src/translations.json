@@ -1,0 +1,38 @@
+{
+  "en": {
+    "languageLabel": "Language",
+    "english": "English",
+    "spanish": "Spanish",
+    "appTitle": "Papelitos",
+    "participantPrompt": "Insert a participant name:",
+    "participantPlaceholder": "insert a name",
+    "addButton": "Add",
+    "editButton": "Edit",
+    "participantsTitle": "Participants",
+    "emptyParticipants": "Add participants to start the raffle.",
+    "shuffleButton": "Shuffle",
+    "clearButton": "Clear list",
+    "visitLink": "Visit Tato",
+    "views": "views",
+    "editParticipant": "Edit participant",
+    "removeParticipant": "Remove participant"
+  },
+  "es": {
+    "languageLabel": "Idioma",
+    "english": "Ingl\u00e9s",
+    "spanish": "Espa\u00f1ol",
+    "appTitle": "Papelitos",
+    "participantPrompt": "Ingresa el nombre de un participante:",
+    "participantPlaceholder": "ingresa un nombre",
+    "addButton": "Agregar",
+    "editButton": "Editar",
+    "participantsTitle": "Participantes",
+    "emptyParticipants": "Agrega participantes para iniciar el sorteo.",
+    "shuffleButton": "Mezclar",
+    "clearButton": "Limpiar lista",
+    "visitLink": "Visitar a Tato",
+    "views": "visitas",
+    "editParticipant": "Editar participante",
+    "removeParticipant": "Eliminar participante"
+  }
+}
