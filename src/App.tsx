@@ -13,6 +13,7 @@ function App() {
   const [editIndex, setEditIndex] = useState<number>();
   const [editing, setEditing] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
+  const [shuffleResult, setShuffleResult] = useState<string[]>([]);
   const [pageViews, setPageViews] = useState<number>();
   const viewCounterRequested = useRef(false);
 
@@ -54,6 +55,7 @@ function App() {
   const addFunction = () => {
     if (participantInput === "") return;
     setParticipants([...participants, participantInput]);
+    setShuffleResult([]);
     setParticipantInput("");
   };
 
@@ -61,6 +63,7 @@ function App() {
     const newArr = [...participants];
     newArr.splice(index, 1);
     setParticipants(newArr);
+    setShuffleResult([]);
   };
 
   const editParticipant = (index: number) => {
@@ -75,6 +78,7 @@ function App() {
     if (typeof editIndex === "undefined") return;
     tempParticipants[editIndex] = participantInput;
     setParticipants(tempParticipants);
+    setShuffleResult([]);
     setParticipantInput("");
     setEditing(false);
   };
@@ -88,7 +92,7 @@ function App() {
       const j = Math.floor(Math.random() * (i + 1));
       [array[i], array[j]] = [array[j], array[i]];
     }
-    setParticipants(array);
+    setShuffleResult(array);
     window.setTimeout(() => setIsShuffling(false), 520);
   };
 
@@ -159,14 +163,32 @@ function App() {
                 Add participants to start the raffle.
               </p>
             )}
-            <button
-              type="button"
-              className="mt-2 inline-flex min-h-[58px] w-full max-w-[260px] items-center justify-center justify-self-center rounded-full border-0 bg-gradient-to-br from-violet-600 to-fuchsia-700 px-[34px] text-[1.08rem] leading-none font-bold text-white shadow-[0_18px_38px_rgba(124,58,237,0.38)] transition-all duration-200 ease-in-out hover:scale-105 hover:from-violet-500 hover:to-pink-600 hover:shadow-[0_22px_46px_rgba(192,38,211,0.34)] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-violet-300/45 disabled:cursor-not-allowed disabled:opacity-65 disabled:grayscale"
-              onClick={() => sortParticipants()}
-              disabled={participants.length < 2}
-            >
-              Sort
-            </button>
+            {shuffleResult.length > 0 && (
+              <ol className="m-0 grid list-decimal gap-2 rounded-xl border border-slate-400/15 bg-slate-950/45 px-6 py-4 text-sm text-slate-200 shadow-[0_14px_35px_rgba(2,6,23,0.18)]">
+                {shuffleResult.map((participant, index) => (
+                  <li key={`${participant}-${index}`}>{participant}</li>
+                ))}
+              </ol>
+            )}
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                className="inline-flex min-h-14.5 w-full max-w-55 items-center justify-center rounded-full border-0 bg-linear-to-br from-violet-600 to-fuchsia-700 px-8.5 text-[1.08rem] leading-none font-bold text-white shadow-[0_18px_38px_rgba(124,58,237,0.38)] transition-all duration-200 ease-in-out hover:scale-105 hover:from-violet-500 hover:to-pink-600 hover:shadow-[0_22px_46px_rgba(192,38,211,0.34)] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-violet-300/45 disabled:cursor-not-allowed disabled:opacity-65 disabled:grayscale"
+                onClick={() => sortParticipants()}
+                disabled={participants.length < 2}
+              >
+                Shuffle
+              </button>
+              {shuffleResult.length > 0 && (
+                <button
+                  type="button"
+                  className="inline-flex min-h-14.5 w-full max-w-55 items-center justify-center rounded-full border border-slate-400/20 bg-slate-900 px-8.5 text-[1.08rem] leading-none font-bold text-slate-200 transition-all duration-200 ease-in-out hover:-translate-y-px hover:border-violet-300/45 hover:text-violet-200 focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-violet-300/45"
+                  onClick={() => setShuffleResult([])}
+                >
+                  Clear list
+                </button>
+              )}
+            </div>
           </div>
         </section>
       </main>
