@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run init:page-views && tsc -b && vite build",
+    "init:page-views": "node scripts/init-page-views.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest",
