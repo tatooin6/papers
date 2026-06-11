@@ -1,98 +1,72 @@
-:root {
-  --bg: #0f172a;
-  --surface: #1e293b;
-  --surface-soft: #263449;
-  --surface-card: #111827;
-  --text: #cbd5e1;
-  --text-strong: #f8fafc;
-  --text-muted: #94a3b8;
-  --border: rgba(148, 163, 184, 0.22);
-  --accent: #7c3aed;
-  --accent-hover: #a78bfa;
-  --accent-strong: #c026d3;
-  --danger: #fb7185;
-  --shadow: 0 24px 70px rgba(2, 6, 23, 0.38);
-  --shadow-soft: 0 14px 35px rgba(2, 6, 23, 0.25);
+@import "tailwindcss";
 
-  font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@theme {
+  --animate-shuffle-blink: shuffle-blink 0.42s linear infinite;
+
+  @keyframes shuffle-blink {
+    0%,
+    100% {
+      opacity: 1;
+      transform: translateX(0) rotate(0deg);
+    }
+
+    20% {
+      opacity: 0.55;
+      transform: translateX(-3px) rotate(-0.7deg);
+    }
+
+    40% {
+      opacity: 1;
+      transform: translateX(3px) rotate(0.7deg);
+    }
+
+    60% {
+      opacity: 0.6;
+      transform: translateX(-2px) rotate(-0.45deg);
+    }
+
+    80% {
+      opacity: 1;
+      transform: translateX(2px) rotate(0.45deg);
+    }
+  }
 }
 
-* {
-  box-sizing: border-box;
+@utility is-shuffling {
+  animation: var(--animate-shuffle-blink);
 }
 
-html {
-  min-height: 100%;
-  background: var(--bg);
-}
+@layer base {
+  html {
+    @apply min-h-full bg-slate-950;
+  }
 
-body {
-  min-width: 320px;
-  min-height: 100svh;
-  margin: 0;
-  background:
-    radial-gradient(circle at top left, rgba(124, 58, 237, 0.22), transparent 34rem),
-    radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.1), transparent 30rem),
-    var(--bg);
-}
+  body {
+    @apply m-0 min-h-svh min-w-80 bg-slate-950 text-slate-300 antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(124, 58, 237, 0.22), transparent 34rem),
+      radial-gradient(circle at bottom right, rgba(34, 211, 238, 0.1), transparent 30rem);
+    font-family:
+      Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+      "Segoe UI", sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+  }
 
-button,
-input {
-  font: inherit;
-}
+  button,
+  input {
+    font: inherit;
+  }
 
-button {
-  cursor: pointer;
-}
+  button:not(:disabled) {
+    @apply cursor-pointer;
+  }
 
-button:disabled {
-  cursor: not-allowed;
-}
+  button:disabled {
+    @apply cursor-not-allowed;
+  }
 
-#root {
-  width: min(100%, 980px);
-  min-height: 100svh;
-  margin: 0 auto;
-  padding: 32px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-}
-
-h1,
-h2,
-p {
-  margin: 0;
-}
-
-h1,
-h2 {
-  color: var(--text-strong);
-  letter-spacing: 0;
-}
-
-h1 {
-  font-size: clamp(2.4rem, 8vw, 4.75rem);
-  line-height: 0.95;
-  font-weight: 800;
-}
-
-h2 {
-  font-size: clamp(1.35rem, 3vw, 2rem);
-  line-height: 1.1;
-  font-weight: 750;
-}
-
-a {
-  color: var(--accent-hover);
+  #root {
+    @apply mx-auto flex min-h-svh w-full max-w-[980px] flex-col items-center justify-center gap-[22px] px-5 py-8 max-sm:justify-start max-sm:p-[18px];
+  }
 }
