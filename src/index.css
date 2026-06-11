@@ -67,6 +67,6 @@
   }
 
   #root {
-    @apply mx-auto flex min-h-svh w-full max-w-[980px] flex-col items-center justify-center gap-[22px] px-5 py-8 max-sm:justify-start max-sm:p-[18px];
+    @apply mx-auto flex min-h-svh w-full max-w-[980px] flex-col items-center px-5 max-sm:px-[18px];
   }
 }
