@@ -52,8 +52,8 @@ function App() {
     const navigationEntry =
       typeof performance.getEntriesByType === "function"
         ? (performance.getEntriesByType(
-            "navigation",
-          )[0] as PerformanceNavigationTiming | undefined)
+          "navigation",
+        )[0] as PerformanceNavigationTiming | undefined)
         : undefined;
     const isReload = navigationEntry?.type === "reload";
     const hasCountedThisTab = sessionStorage.getItem(tabViewKey) === "true";
@@ -108,7 +108,7 @@ function App() {
     setEditing(false);
   };
 
-  const sortParticipants = () => {
+  const fisherYatesShuffle = () => {
     if (participants.length < 2) return;
 
     setIsShuffling(true);
@@ -218,7 +218,7 @@ function App() {
               <button
                 type="button"
                 className="inline-flex min-h-14.5 w-full max-w-55 items-center justify-center rounded-full border border-[#1A1A1A] bg-[#1A1A1A] px-8.5 text-[1.08rem] leading-none font-bold text-[#F4F1EA] shadow-[0_18px_38px_rgba(26,26,26,0.2)] transition-all duration-200 ease-in-out hover:scale-105 hover:bg-[#F4F1EA] hover:text-[#1A1A1A] hover:shadow-[0_22px_46px_rgba(26,26,26,0.16)] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-[#1A1A1A]/35 disabled:cursor-not-allowed disabled:opacity-55"
-                onClick={() => sortParticipants()}
+                onClick={() => fisherYatesShuffle()}
                 disabled={participants.length < 2}
               >
                 {copy.shuffleButton}
@@ -250,6 +250,7 @@ function App() {
             {pageViews.toLocaleString()} {copy.views}
           </span>
         )}
+        <p>Version {import.meta.env.VITE_APP_VERSION}</p>
       </footer>
     </>
   );
