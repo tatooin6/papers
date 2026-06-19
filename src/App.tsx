@@ -123,7 +123,7 @@ function App() {
 
   return (
     <>
-      <main className="flex w-full flex-1 flex-col items-center justify-center gap-5.5 py-8 max-sm:justify-start max-sm:py-[18px]">
+      <main className="flex w-full flex-1 flex-col items-center justify-center gap-5.5 py-8 max-sm:justify-start max-sm:py-4.5">
         <section
           className={`${panelClass} grid grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_1fr] items-stretch gap-x-4.5 gap-y-5 p-7 max-sm:grid-cols-1 max-sm:grid-rows-none max-sm:p-5.5`}
         >
