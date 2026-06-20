@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import RemovableBadge from "./components/badge";
+import Modal from "./components/Modal";
 import papelitosLogo from "./assets/papelitos-logo.svg";
+import gearSettings from "./assets/gear-settings.svg";
 import translations from "./translations.json";
+import Toggle from "./components/Toggle";
 
-const languages = ["en", "es"] as const;
-type Language = (typeof languages)[number];
+type Language = "en" | "es";
 
 const panelClass =
   "w-full max-w-[760px] rounded-xl border border-[#1A1A1A]/20 bg-[#F4F1EA]/80 shadow-[0_22px_55px_rgba(26,26,26,0.16)]";
@@ -21,6 +23,9 @@ function App() {
   const [isShuffling, setIsShuffling] = useState(false);
   const [shuffleResult, setShuffleResult] = useState<string[]>([]);
   const [pageViews, setPageViews] = useState<number>();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSuspenseActivated, setIsSuspenseActivated] = useState(false);
+  const [useStragglers, setUseStragglers] = useState(false);
   const viewCounterRequested = useRef(false);
   const copy = translations[language];
 
@@ -150,15 +155,18 @@ function App() {
               onChange={(e) => setParticipantInput(e.target.value)}
             />
           </div>
-          <select
-            aria-label={copy.languageLabel}
-            className="col-start-2 row-start-1 min-h-10 w-42 justify-self-end self-start rounded-full border border-[#1A1A1A]/25 bg-[#F4F1EA] px-3.5 text-sm text-[#1A1A1A] outline-3 outline-transparent transition-[border-color,box-shadow,outline-color] duration-200 focus:border-[#1A1A1A]/65 focus:shadow-[0_0_0_5px_rgba(26,26,26,0.09)] focus:outline-[#1A1A1A]/18 max-sm:col-start-1 max-sm:row-start-1 max-sm:w-38"
-            value={language}
-            onChange={(event) => setLanguage(event.target.value as Language)}
+          <button
+            type="button"
+            className="inline-flex items-center justify-center p-0 border-none bg-transparent cursor-pointer transition-opacity duration-150 ease-in-out hover:opacity-70 focus:outline-2 focus:outline-offset-2 focus:outline-blue-500"
+            onClick={() => setIsModalOpen(true)}
           >
-            <option value="en">{copy.english}</option>
-            <option value="es">{copy.spanish}</option>
-          </select>
+            <img
+              src={gearSettings}
+              alt="settings"
+              className="h-[1.5em] w-auto shrink-0"
+              aria-hidden="true"
+            />
+          </button>
           {!editing && (
             <button
               type="button"
@@ -236,6 +244,54 @@ function App() {
           </div>
         </section>
       </main>
+
+      <Modal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        modalTitle="Configuration"
+        children={(
+          <>
+            <div className="flex flex-row justify-between">
+              <div>
+                <p className="text-sm text-gray-400">
+                  Select language
+                </p>
+              </div>
+              <div>
+                <select
+                  aria-label={copy.languageLabel}
+                  className="col-start-2 row-start-1 min-h-10 w-42 justify-self-end self-start rounded-full border border-[#1A1A1A]/25 bg-[#F4F1EA] px-3.5 text-sm text-[#1A1A1A] outline-3 outline-transparent transition-[border-color,box-shadow,outline-color] duration-200 focus:border-[#1A1A1A]/65 focus:shadow-[0_0_0_5px_rgba(26,26,26,0.09)] focus:outline-[#1A1A1A]/18 max-sm:col-start-1 max-sm:row-start-1 max-sm:w-38"
+                  value={language}
+                  onChange={(event) => setLanguage(event.target.value as Language)}
+                >
+                  <option value="en">{copy.english}</option>
+                  <option value="es">{copy.spanish}</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-row justify-between">
+              <div><p>Suspense</p></div>
+              <div>
+                <Toggle
+                  activated={isSuspenseActivated}
+                  incomingOnClick={() => setIsSuspenseActivated(!isSuspenseActivated)}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-row justify-between">
+              <div><p>Stragglers</p></div>
+              <div>
+                <Toggle
+                  activated={useStragglers}
+                  incomingOnClick={() => setUseStragglers(!useStragglers)}
+                />
+              </div>
+            </div>
+          </>
+        )}
+      />
 
       <footer className="flex w-full shrink-0 flex-wrap items-center justify-center gap-x-4 gap-y-1 pb-5 text-xs leading-none text-[#1A1A1A]/58 max-sm:pb-4">
         <a
