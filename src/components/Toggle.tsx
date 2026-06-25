@@ -11,7 +11,7 @@ const Toggle = ({ activated, incomingOnClick }: ToggleProps) => {
   return (
     <button
       type="button"
-      className="inline-flex items-center justify-center p-0 border-none bg-transparent cursor-pointer transition-opacity duration-150 ease-in-out hover:opacity-70 focus:outline-2 focus:outline-offset-2 focus:outline-blue-500"
+      className="inline-flex cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity duration-150 ease-in-out hover:opacity-70 focus:outline-2 focus:outline-offset-2 focus:outline-paper-focus"
       onClick={() => incomingOnClick()}
     >
       {
