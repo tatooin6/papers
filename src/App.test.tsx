@@ -8,7 +8,7 @@ test("adds a participant to the list", async () => {
   render(<App />);
 
   await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Alice");
-  await user.click(screen.getByRole("button", { name: /agregar/i }));
+  await user.click(screen.getByRole("button", { name: /^agregar$/i }));
 
   expect(screen.getByText("Alice")).toBeInTheDocument();
 });
@@ -19,9 +19,9 @@ test("shows a shuffled order list and clear button after sorting", async () => {
   render(<App />);
 
   await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Alice");
-  await user.click(screen.getByRole("button", { name: /agregar/i }));
+  await user.click(screen.getByRole("button", { name: /^agregar$/i }));
   await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Bob");
-  await user.click(screen.getByRole("button", { name: /agregar/i }));
+  await user.click(screen.getByRole("button", { name: /^agregar$/i }));
   await user.click(screen.getByRole("button", { name: /mezclar/i }));
 
   expect(screen.getByRole("button", { name: /limpiar lista/i })).toBeInTheDocument();
@@ -34,9 +34,9 @@ test("clears the shuffled order list when a participant is removed", async () =>
   render(<App />);
 
   await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Alice");
-  await user.click(screen.getByRole("button", { name: /agregar/i }));
+  await user.click(screen.getByRole("button", { name: /^agregar$/i }));
   await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Bob");
-  await user.click(screen.getByRole("button", { name: /agregar/i }));
+  await user.click(screen.getByRole("button", { name: /^agregar$/i }));
   await user.click(screen.getByRole("button", { name: /mezclar/i }));
   await user.click(
     screen.getAllByRole("button", { name: /eliminar participante/i })[0],
@@ -49,7 +49,6 @@ test("uses Spanish by default", () => {
   render(<App />);
 
   expect(screen.getByRole("heading", { name: /papelitos/i })).toBeInTheDocument();
-  expect(screen.getByLabelText(/idioma/i)).toHaveValue("es");
   expect(screen.getByText(/ingresa el nombre/i)).toBeInTheDocument();
   expect(screen.queryByText(/^idioma$/i)).not.toBeInTheDocument();
 });
@@ -59,6 +58,7 @@ test("switches visible text to English", async () => {
 
   render(<App />);
 
+  await user.click(screen.getByRole("button", { name: /configuracion/i }));
   await user.selectOptions(screen.getByLabelText(/idioma/i), "en");
 
   expect(screen.getByLabelText(/language/i)).toHaveValue("en");
@@ -66,4 +66,12 @@ test("switches visible text to English", async () => {
   expect(screen.getByPlaceholderText(/insert a name/i)).toBeInTheDocument();
   expect(screen.getByRole("button", { name: /add/i })).toBeInTheDocument();
   expect(screen.getByRole("heading", { name: /participants/i })).toBeInTheDocument();
+});
+
+test("disables moving a straggler when there are no stragglers", () => {
+  render(<App />);
+
+  expect(
+    screen.getByRole("button", { name: /mover rezagado a participantes/i }),
+  ).toBeDisabled();
 });

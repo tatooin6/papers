@@ -30,6 +30,8 @@ function App() {
   const [useStragglers, setUseStragglers] = useState(true);
   const viewCounterRequested = useRef(false);
   const copy = translations[language];
+  const appVersion =
+    typeof __APP_VERSION__ === "undefined" ? "" : __APP_VERSION__;
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -119,20 +121,19 @@ function App() {
     if (participantInput === "") return;
     setStragglers([...stragglers, participantInput]);
     setParticipantInput("");
-  }
+  };
 
   const addParticipantFromStragglers = () => {
-    if (stragglers.length === 0) return;
-    const tempStragglers = [...stragglers];
-    const firstStraggler = tempStragglers.shift();
-    console.log(firstStraggler);
-    if (firstStraggler) {
-      setParticipants([...participants, firstStraggler]);
-      setStragglers([...tempStragglers]);
-    } else {
-      console.log('%cNo Stragglers left', 'color:red');
-    }
-  }
+    const [nextStraggler, ...remainingStragglers] = stragglers;
+    if (!nextStraggler) return;
+
+    setParticipants((currentParticipants) => [
+      ...currentParticipants,
+      nextStraggler,
+    ]);
+    setStragglers(remainingStragglers);
+    setShuffleResult([]);
+  };
 
   const fisherYatesShuffle = () => {
     if (participants.length < 2) return;
@@ -178,21 +179,22 @@ function App() {
           </div>
           <button
             type="button"
-            className="inline-flex cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity duration-150 ease-in-out hover:opacity-70 focus:outline-2 focus:outline-offset-2 focus:outline-paper-focus"
+            className="col-start-2 row-start-1 inline-flex cursor-pointer items-center justify-center justify-self-end self-start border-none bg-transparent p-0 transition-opacity duration-150 ease-in-out hover:opacity-70 focus:outline-2 focus:outline-offset-2 focus:outline-paper-focus max-sm:col-start-1 max-sm:row-start-1"
             onClick={() => setIsModalOpen(true)}
+            aria-label={copy.settingsLabel}
           >
             <img
               src={gearSettings}
-              alt="settings"
+              alt=""
               className="h-[1.5em] w-auto shrink-0"
               aria-hidden="true"
             />
           </button>
           {!editing && (
-            <div>
+            <div className="col-start-2 row-start-2 flex items-end justify-end gap-3 self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:w-full max-sm:flex-wrap">
               <button
                 type="button"
-                className={`${primaryButtonClass} col-start-2 row-start-2 self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:w-full`}
+                className={`${primaryButtonClass} max-sm:flex-1`}
                 onClick={() => addParticipant()}
               >
                 {copy.addButton}
@@ -201,10 +203,10 @@ function App() {
               {useStragglers && (
                 <button
                   type="button"
-                  className={`${primaryButtonClass} col-start-2 row-start-2 self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:w-full`}
+                  className={`${primaryButtonClass} max-sm:flex-1`}
                   onClick={() => addStraggler()}
                 >
-                  Rezagar
+                  {copy.straggleButton}
                 </button>
               )}
             </div>
@@ -282,12 +284,14 @@ function App() {
                   </h2>
                   <button
                     type="button"
-                    className="inline-flex cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity duration-150 ease-in-out hover:opacity-70 focus:outline-2 focus:outline-offset-2 focus:outline-paper-focus"
+                    className="inline-flex cursor-pointer items-center justify-center border-none bg-transparent p-0 transition-opacity duration-150 ease-in-out hover:opacity-70 focus:outline-2 focus:outline-offset-2 focus:outline-paper-focus disabled:cursor-not-allowed disabled:opacity-35"
                     onClick={() => addParticipantFromStragglers()}
+                    disabled={stragglers.length === 0}
+                    aria-label={copy.addStragglerToParticipants}
                   >
                     <img
                       src={addButton}
-                      alt="settings"
+                      alt=""
                       className="h-[2em] w-auto shrink-0"
                       aria-hidden="true"
                     />
@@ -309,13 +313,15 @@ function App() {
       <Modal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        modalTitle="Configuration"
+        modalTitle={copy.configurationTitle}
+        closeLabel={copy.closeDialog}
+        doneLabel={copy.doneButton}
         children={(
           <>
             <div className="flex flex-row justify-between">
               <div>
                 <p className="text-sm text-paper-ink/65">
-                  Select language
+                  {copy.selectLanguage}
                 </p>
               </div>
               <div>
@@ -332,7 +338,7 @@ function App() {
             </div>
 
             <div className="flex flex-row justify-between">
-              <div><p>Suspense</p></div>
+              <div><p>{copy.suspenseLabel}</p></div>
               <div>
                 <Toggle
                   activated={isSuspenseActivated}
@@ -342,7 +348,7 @@ function App() {
             </div>
 
             <div className="flex flex-row justify-between">
-              <div><p>Stragglers</p></div>
+              <div><p>{copy.stragglersTitle}</p></div>
               <div>
                 <Toggle
                   activated={useStragglers}
@@ -367,7 +373,7 @@ function App() {
             {pageViews.toLocaleString()} {copy.views}
           </span>
         )}
-        <p>Version {import.meta.env.VITE_APP_VERSION}</p>
+        <p>{copy.versionLabel} {appVersion}</p>
       </footer>
     </>
   );

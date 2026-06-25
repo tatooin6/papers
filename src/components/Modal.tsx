@@ -4,6 +4,8 @@ type ModalProps = {
   open: boolean;
   onClose: () => void;
   modalTitle: string;
+  closeLabel: string;
+  doneLabel: string;
   children: ReactNode;
 };
 
@@ -16,7 +18,14 @@ const focusableSelector = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
-const Modal = ({ open, onClose, modalTitle, children }: ModalProps) => {
+const Modal = ({
+  open,
+  onClose,
+  modalTitle,
+  closeLabel,
+  doneLabel,
+  children,
+}: ModalProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
   const titleId = useId();
@@ -92,7 +101,7 @@ const Modal = ({ open, onClose, modalTitle, children }: ModalProps) => {
     >
       <button
         type="button"
-        aria-label="Close dialog"
+        aria-label={closeLabel}
         className="fixed inset-0 bg-paper-ink/50 transition-opacity"
         onClick={onClose}
       />
@@ -126,7 +135,7 @@ const Modal = ({ open, onClose, modalTitle, children }: ModalProps) => {
                 onClick={onClose}
                 className="mt-3 inline-flex w-full justify-center rounded-md bg-paper-ink px-3 py-2 text-sm font-semibold text-paper-background inset-ring inset-ring-paper-ink/10 transition-colors hover:bg-paper-ink/85 sm:mt-0 sm:w-auto"
               >
-                Done
+                {doneLabel}
               </button>
             </div>
           </div>
