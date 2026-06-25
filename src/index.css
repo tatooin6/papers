@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 @theme {
+  --color-paper-background: #f4f1ea;
+  --color-paper-ink: #1a1a1a;
+  --color-paper-focus: #2563eb;
+
   --animate-shuffle-blink: shuffle-blink 0.42s linear infinite;
 
   @keyframes shuffle-blink {
@@ -38,11 +42,11 @@
 
 @layer base {
   html {
-    @apply min-h-full bg-[#F4F1EA];
+    @apply min-h-full bg-paper-background;
   }
 
   body {
-    @apply m-0 min-h-svh min-w-80 bg-[#F4F1EA] text-[#1A1A1A] antialiased;
+    @apply m-0 min-h-svh min-w-80 bg-paper-background text-paper-ink antialiased;
     font-family: Georgia, "Times New Roman", Times, serif;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
