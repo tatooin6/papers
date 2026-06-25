@@ -8,6 +8,7 @@ import translations from "./translations.json";
 import Toggle from "./components/Toggle";
 
 type Language = "en" | "es";
+type Direction = -1 | 1;
 
 const panelClass =
   "w-full max-w-[760px] rounded-xl border border-paper-ink/20 bg-paper-background/80 shadow-[0_22px_55px_rgba(26,26,26,0.16)]";
@@ -15,27 +16,43 @@ const panelClass =
 const primaryButtonClass =
   "inline-flex min-h-12 items-center justify-center rounded-full border border-paper-ink bg-paper-ink px-[22px] font-bold leading-none text-paper-background transition-all duration-200 ease-in-out hover:-translate-y-px hover:bg-paper-background hover:text-paper-ink hover:shadow-[0_12px_28px_rgba(26,26,26,0.18)] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-paper-ink/35 disabled:cursor-not-allowed disabled:opacity-55";
 
+const suspenseSeconds = 5;
+
 function App() {
   const [language, setLanguage] = useState<Language>("es");
   const [participantInput, setParticipantInput] = useState("");
+  const [participantWarning, setParticipantWarning] = useState("");
   const [participants, setParticipants] = useState<string[]>([]);
   const [stragglers, setStragglers] = useState<string[]>([]);
   const [editIndex, setEditIndex] = useState<number>();
+  const [stragglerEditIndex, setStragglerEditIndex] = useState<number>();
   const [editing, setEditing] = useState(false);
+  const [editingStraggler, setEditingStraggler] = useState(false);
   const [isShuffling, setIsShuffling] = useState(false);
   const [shuffleResult, setShuffleResult] = useState<string[]>([]);
+  const [suspenseCountdown, setSuspenseCountdown] = useState<number>();
   const [pageViews, setPageViews] = useState<number>();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuspenseActivated, setIsSuspenseActivated] = useState(false);
   const [useStragglers, setUseStragglers] = useState(true);
   const viewCounterRequested = useRef(false);
+  const suspenseTimer = useRef<number | undefined>(undefined);
   const copy = translations[language];
   const appVersion =
     typeof __APP_VERSION__ === "undefined" ? "" : __APP_VERSION__;
+  const isEditingName = editing || editingStraggler;
 
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof suspenseTimer.current === "number") {
+        window.clearInterval(suspenseTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (viewCounterRequested.current) return;
@@ -86,9 +103,46 @@ function App() {
     void loadPageViews();
   }, []);
 
+  const normalizeName = (name: string) => name.trim().toLocaleLowerCase();
+
+  const participantExists = (name: string, ignoredIndex?: number) =>
+    participants.some(
+      (participant, index) =>
+        index !== ignoredIndex && normalizeName(participant) === normalizeName(name),
+    );
+
+  const stragglerExists = (name: string, ignoredIndex?: number) =>
+    stragglers.some(
+      (straggler, index) =>
+        index !== ignoredIndex && normalizeName(straggler) === normalizeName(name),
+    );
+
+  const showDuplicateWarning = (name: string) => {
+    setParticipantWarning(copy.duplicateParticipant.replace("{name}", name));
+  };
+
+  const canUseName = (
+    name: string,
+    participantIgnoredIndex?: number,
+    stragglerIgnoredIndex?: number,
+  ) => {
+    if (
+      participantExists(name, participantIgnoredIndex) ||
+      stragglerExists(name, stragglerIgnoredIndex)
+    ) {
+      showDuplicateWarning(name);
+      return false;
+    }
+
+    setParticipantWarning("");
+    return true;
+  };
+
   const addParticipant = () => {
-    if (participantInput === "") return;
-    setParticipants([...participants, participantInput]);
+    const participantName = participantInput.trim();
+    if (participantName === "" || !canUseName(participantName)) return;
+
+    setParticipants([...participants, participantName]);
     setShuffleResult([]);
     setParticipantInput("");
   };
@@ -102,15 +156,25 @@ function App() {
 
   const editParticipant = (index: number) => {
     setEditing(true);
+    setEditingStraggler(false);
     setEditIndex(index);
     const toEdit = participants[index];
     setParticipantInput(toEdit);
+    setParticipantWarning("");
   };
 
   const editParticipantName = () => {
+    const participantName = participantInput.trim();
     const tempParticipants = [...participants];
-    if (typeof editIndex === "undefined") return;
-    tempParticipants[editIndex] = participantInput;
+    if (
+      typeof editIndex === "undefined" ||
+      participantName === "" ||
+      !canUseName(participantName, editIndex)
+    ) {
+      return;
+    }
+
+    tempParticipants[editIndex] = participantName;
     setParticipants(tempParticipants);
     setShuffleResult([]);
     setParticipantInput("");
@@ -118,24 +182,81 @@ function App() {
   };
 
   const addStraggler = () => {
-    if (participantInput === "") return;
-    setStragglers([...stragglers, participantInput]);
+    const stragglerName = participantInput.trim();
+    if (stragglerName === "" || !canUseName(stragglerName)) return;
+
+    setStragglers([...stragglers, stragglerName]);
     setParticipantInput("");
   };
 
-  const addParticipantFromStragglers = () => {
-    const [nextStraggler, ...remainingStragglers] = stragglers;
+  const addParticipantFromStragglers = (index = 0) => {
+    const nextStraggler = stragglers[index];
     if (!nextStraggler) return;
+    if (participantExists(nextStraggler)) {
+      showDuplicateWarning(nextStraggler);
+      return;
+    }
 
     setParticipants((currentParticipants) => [
       ...currentParticipants,
       nextStraggler,
     ]);
-    setStragglers(remainingStragglers);
+    setStragglers((currentStragglers) =>
+      currentStragglers.filter((_, stragglerIndex) => stragglerIndex !== index),
+    );
     setShuffleResult([]);
+    setParticipantWarning("");
   };
 
-  const fisherYatesShuffle = () => {
+  const removeStraggler = (index: number) => {
+    setStragglers((currentStragglers) =>
+      currentStragglers.filter((_, stragglerIndex) => stragglerIndex !== index),
+    );
+    setParticipantWarning("");
+  };
+
+  const editStraggler = (index: number) => {
+    setEditing(false);
+    setEditingStraggler(true);
+    setStragglerEditIndex(index);
+    setParticipantInput(stragglers[index]);
+    setParticipantWarning("");
+  };
+
+  const editStragglerName = () => {
+    const stragglerName = participantInput.trim();
+    if (
+      typeof stragglerEditIndex === "undefined" ||
+      stragglerName === "" ||
+      !canUseName(stragglerName, undefined, stragglerEditIndex)
+    ) {
+      return;
+    }
+
+    setStragglers((currentStragglers) =>
+      currentStragglers.map((straggler, index) =>
+        index === stragglerEditIndex ? stragglerName : straggler,
+      ),
+    );
+    setParticipantInput("");
+    setEditingStraggler(false);
+  };
+
+  const moveStraggler = (index: number, direction: Direction) => {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= stragglers.length) return;
+
+    setStragglers((currentStragglers) => {
+      const orderedStragglers = [...currentStragglers];
+      [orderedStragglers[index], orderedStragglers[newIndex]] = [
+        orderedStragglers[newIndex],
+        orderedStragglers[index],
+      ];
+      return orderedStragglers;
+    });
+  };
+
+  const shuffleParticipants = () => {
     if (participants.length < 2) return;
 
     setIsShuffling(true);
@@ -146,6 +267,34 @@ function App() {
     }
     setShuffleResult(array);
     window.setTimeout(() => setIsShuffling(false), 520);
+  };
+
+  const fisherYatesShuffle = () => {
+    if (participants.length < 2 || typeof suspenseCountdown === "number") return;
+
+    if (!isSuspenseActivated) {
+      shuffleParticipants();
+      return;
+    }
+
+    let remainingSeconds = suspenseSeconds;
+    setShuffleResult([]);
+    setSuspenseCountdown(remainingSeconds);
+
+    suspenseTimer.current = window.setInterval(() => {
+      remainingSeconds -= 1;
+
+      if (remainingSeconds === 0) {
+        if (typeof suspenseTimer.current === "number") {
+          window.clearInterval(suspenseTimer.current);
+        }
+        setSuspenseCountdown(undefined);
+        shuffleParticipants();
+        return;
+      }
+
+      setSuspenseCountdown(remainingSeconds);
+    }, 1000);
   };
 
   return (
@@ -174,7 +323,10 @@ function App() {
               type="text"
               placeholder={copy.participantPlaceholder}
               value={participantInput}
-              onChange={(e) => setParticipantInput(e.target.value)}
+              onChange={(e) => {
+                setParticipantInput(e.target.value);
+                setParticipantWarning("");
+              }}
             />
           </div>
           <button
@@ -190,7 +342,7 @@ function App() {
               aria-hidden="true"
             />
           </button>
-          {!editing && (
+          {!isEditingName && (
             <div className="col-start-2 row-start-2 flex items-end justify-end gap-3 self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:w-full max-sm:flex-wrap">
               <button
                 type="button"
@@ -211,14 +363,21 @@ function App() {
               )}
             </div>
           )}
-          {editing && (
+          {isEditingName && (
             <button
               type="button"
               className={`${primaryButtonClass} col-start-2 row-start-2 self-end max-sm:col-start-1 max-sm:row-start-3 max-sm:w-full`}
-              onClick={() => editParticipantName()}
+              onClick={() =>
+                editingStraggler ? editStragglerName() : editParticipantName()
+              }
             >
               {copy.editButton}
             </button>
+          )}
+          {participantWarning !== "" && (
+            <p className="col-span-2 row-start-3 m-0 text-sm font-semibold text-red-800/80 max-sm:col-span-1 max-sm:row-start-4">
+              {participantWarning}
+            </p>
           )}
         </section>
 
@@ -262,9 +421,14 @@ function App() {
                 type="button"
                 className="inline-flex min-h-14.5 w-full max-w-55 items-center justify-center rounded-full border border-paper-ink bg-paper-ink px-8.5 text-[1.08rem] leading-none font-bold text-paper-background shadow-[0_18px_38px_rgba(26,26,26,0.2)] transition-all duration-200 ease-in-out hover:scale-105 hover:bg-paper-background hover:text-paper-ink hover:shadow-[0_22px_46px_rgba(26,26,26,0.16)] focus-visible:outline-3 focus-visible:outline-offset-3 focus-visible:outline-paper-ink/35 disabled:cursor-not-allowed disabled:opacity-55"
                 onClick={() => fisherYatesShuffle()}
-                disabled={participants.length < 2}
+                disabled={participants.length < 2 || typeof suspenseCountdown === "number"}
               >
-                {copy.shuffleButton}
+                {typeof suspenseCountdown === "number"
+                  ? copy.countdownButton.replace(
+                    "{seconds}",
+                    suspenseCountdown.toString(),
+                  )
+                  : copy.shuffleButton}
               </button>
               {shuffleResult.length > 0 && (
                 <button
@@ -276,6 +440,17 @@ function App() {
                 </button>
               )}
             </div>
+            {typeof suspenseCountdown === "number" && (
+              <p
+                className="m-0 text-center text-sm font-semibold text-paper-ink/70"
+                aria-live="polite"
+              >
+                {copy.countdownMessage.replace(
+                  "{seconds}",
+                  suspenseCountdown.toString(),
+                )}
+              </p>
+            )}
             {useStragglers && (
               <div>
                 <div className="flex flex-row justify-between">
@@ -298,9 +473,113 @@ function App() {
                   </button>
                 </div>
                 {stragglers.length > 0 && (
-                  <ol className="m-0 grid list-decimal gap-2 rounded-xl border border-paper-ink/18 bg-paper-background/70 px-6 py-4 text-sm text-paper-ink shadow-[0_14px_35px_rgba(26,26,26,0.1)]">
+                  <ol className="m-0 grid list-decimal gap-1 rounded-xl border border-paper-ink/18 bg-paper-background/70 py-3 pr-4 pl-8 text-sm text-paper-ink shadow-[0_14px_35px_rgba(26,26,26,0.1)]">
                     {stragglers.map((straggler, index) => (
-                      <li key={`${straggler}-${index}`}>{straggler}</li>
+                      <li
+                        key={`${straggler}-${index}`}
+                        className="pl-1"
+                      >
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 rounded-lg bg-paper-background/70 px-3 py-1.5">
+                          <span className="min-w-0 break-words pr-2 font-medium">
+                            {straggler}
+                          </span>
+                          <span className="flex flex-wrap justify-end gap-2">
+                          <button
+                            type="button"
+                            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full bg-transparent text-paper-ink transition-colors hover:bg-paper-ink/8 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-paper-focus disabled:cursor-not-allowed disabled:opacity-35"
+                            onClick={() => moveStraggler(index, -1)}
+                            disabled={index === 0}
+                            aria-label={copy.moveStragglerUp.replace(
+                              "{name}",
+                              straggler,
+                            )}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4.5 w-4.5 stroke-current"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M12 18V6m0 0-5 5m5-5 5 5"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full bg-transparent text-paper-ink transition-colors hover:bg-paper-ink/8 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-paper-focus disabled:cursor-not-allowed disabled:opacity-35"
+                            onClick={() => moveStraggler(index, 1)}
+                            disabled={index === stragglers.length - 1}
+                            aria-label={copy.moveStragglerDown.replace(
+                              "{name}",
+                              straggler,
+                            )}
+                          >
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="h-4.5 w-4.5 stroke-current"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M12 6v12m0 0-5-5m5 5 5-5"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => editStraggler(index)}
+                            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full bg-transparent text-paper-ink transition-colors hover:bg-paper-ink/8 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-paper-focus"
+                            aria-label={copy.editStraggler.replace(
+                              "{name}",
+                              straggler,
+                            )}
+                          >
+                            <svg
+                              viewBox="0 0 14 14"
+                              className="h-4 w-4 stroke-current"
+                              fill="none"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M10.5 1.5l2 2-9 9-2.5.5.5-2.5 9-9z M9.5 2.5l2 2"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeStraggler(index)}
+                            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full bg-transparent text-paper-ink transition-colors hover:bg-paper-ink/8 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-paper-focus"
+                            aria-label={copy.removeStraggler.replace(
+                              "{name}",
+                              straggler,
+                            )}
+                          >
+                            <svg
+                              viewBox="0 0 14 14"
+                              className="h-4 w-4 stroke-current"
+                              aria-hidden="true"
+                            >
+                              <path
+                                d="M4 4l6 6m0-6l-6 6"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </button>
+                          </span>
+                        </div>
+                      </li>
                     ))}
                   </ol>
                 )}
@@ -343,6 +622,7 @@ function App() {
                 <Toggle
                   activated={isSuspenseActivated}
                   incomingOnClick={() => setIsSuspenseActivated(!isSuspenseActivated)}
+                  label={copy.suspenseToggleLabel}
                 />
               </div>
             </div>
@@ -353,6 +633,7 @@ function App() {
                 <Toggle
                   activated={useStragglers}
                   incomingOnClick={() => setUseStragglers(!useStragglers)}
+                  label={copy.stragglersToggleLabel}
                 />
               </div>
             </div>

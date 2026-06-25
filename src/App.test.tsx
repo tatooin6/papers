@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { act } from "react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 
@@ -74,4 +75,65 @@ test("disables moving a straggler when there are no stragglers", () => {
   expect(
     screen.getByRole("button", { name: /mover rezagado a participantes/i }),
   ).toBeDisabled();
+});
+
+test("warns when adding a duplicate name", async () => {
+  const user = userEvent.setup();
+
+  render(<App />);
+
+  await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Alice");
+  await user.click(screen.getByRole("button", { name: /^agregar$/i }));
+  await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "alice");
+  await user.click(screen.getByRole("button", { name: /^agregar$/i }));
+
+  expect(screen.getByText(/alice ya existe/i)).toBeInTheDocument();
+});
+
+test("shows a suspense countdown before shuffling", async () => {
+  jest.useFakeTimers();
+  const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+  try {
+    render(<App />);
+
+    await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Alice");
+    await user.click(screen.getByRole("button", { name: /^agregar$/i }));
+    await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Bob");
+    await user.click(screen.getByRole("button", { name: /^agregar$/i }));
+    await user.click(screen.getByRole("button", { name: /configuracion/i }));
+    await user.click(screen.getByRole("button", { name: /activar suspenso/i }));
+    await user.click(screen.getByRole("button", { name: /listo/i }));
+    await user.click(screen.getByRole("button", { name: /mezclar/i }));
+
+    expect(screen.getByText(/mezclando en 5 segundos/i)).toBeInTheDocument();
+
+    await act(async () => {
+      jest.advanceTimersByTime(5000);
+    });
+
+    expect(screen.getByRole("button", { name: /limpiar lista/i })).toBeInTheDocument();
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test("reorders stragglers and disables edge movement", async () => {
+  const user = userEvent.setup();
+
+  render(<App />);
+
+  await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Alice");
+  await user.click(screen.getByRole("button", { name: /rezagar/i }));
+  await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Bob");
+  await user.click(screen.getByRole("button", { name: /rezagar/i }));
+
+  expect(screen.getByRole("button", { name: /mover alice hacia arriba/i })).toBeDisabled();
+  expect(screen.getByRole("button", { name: /mover bob hacia abajo/i })).toBeDisabled();
+
+  await user.click(screen.getByRole("button", { name: /mover bob hacia arriba/i }));
+
+  const stragglers = screen.getAllByRole("listitem");
+  expect(stragglers[0]).toHaveTextContent("Bob");
+  expect(stragglers[1]).toHaveTextContent("Alice");
 });

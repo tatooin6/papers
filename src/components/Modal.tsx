@@ -1,4 +1,5 @@
 import { type KeyboardEvent, type ReactNode, useEffect, useId, useRef } from "react";
+import gearSettings from "../assets/gear-settings.svg";
 
 type ModalProps = {
   open: boolean;
@@ -116,7 +117,12 @@ const Modal = ({
             <div className="bg-paper-background px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
               <div className="sm:flex sm:items-start">
                 <div className="mx-auto flex size-12 shrink-0 items-center justify-center rounded-full bg-paper-ink/10 text-paper-ink sm:mx-0 sm:size-10">
-                  <p aria-hidden="true">!</p>
+                  <img
+                    src={gearSettings}
+                    alt=""
+                    className="h-5 w-auto shrink-0"
+                    aria-hidden="true"
+                  />
                 </div>
                 <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
                   <h3 id={titleId} className="text-base font-semibold text-paper-ink">
