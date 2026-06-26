@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 import RemovableBadge from "./components/badge";
 import Modal from "./components/Modal";
 import papelitosLogo from "./assets/papelitos-logo.svg";
@@ -242,6 +242,24 @@ function App() {
     setEditingStraggler(false);
   };
 
+  const handleParticipantInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== "Enter") return;
+
+    event.preventDefault();
+
+    if (editingStraggler) {
+      editStragglerName();
+      return;
+    }
+
+    if (editing) {
+      editParticipantName();
+      return;
+    }
+
+    addParticipant();
+  };
+
   const moveStraggler = (index: number, direction: Direction) => {
     const newIndex = index + direction;
     if (newIndex < 0 || newIndex >= stragglers.length) return;
@@ -327,6 +345,7 @@ function App() {
                 setParticipantInput(e.target.value);
                 setParticipantWarning("");
               }}
+              onKeyDown={handleParticipantInputKeyDown}
             />
           </div>
           <button

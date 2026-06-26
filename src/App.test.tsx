@@ -14,6 +14,48 @@ test("adds a participant to the list", async () => {
   expect(screen.getByText("Alice")).toBeInTheDocument();
 });
 
+test("adds a participant with Enter by default", async () => {
+  const user = userEvent.setup();
+
+  render(<App />);
+
+  await user.type(screen.getByPlaceholderText(/ingresa un nombre/i), "Alice{enter}");
+
+  expect(screen.getByText("Alice")).toBeInTheDocument();
+  expect(screen.queryByRole("listitem")).not.toBeInTheDocument();
+});
+
+test("saves a participant edit with Enter", async () => {
+  const user = userEvent.setup();
+
+  render(<App />);
+
+  const input = screen.getByPlaceholderText(/ingresa un nombre/i);
+  await user.type(input, "Alice{enter}");
+  await user.click(screen.getByRole("button", { name: /editar participante/i }));
+  await user.clear(input);
+  await user.type(input, "Alicia{enter}");
+
+  expect(screen.getByText("Alicia")).toBeInTheDocument();
+  expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+});
+
+test("saves a straggler edit with Enter", async () => {
+  const user = userEvent.setup();
+
+  render(<App />);
+
+  const input = screen.getByPlaceholderText(/ingresa un nombre/i);
+  await user.type(input, "Alice");
+  await user.click(screen.getByRole("button", { name: /rezagar/i }));
+  await user.click(screen.getByRole("button", { name: /editar rezagado alice/i }));
+  await user.clear(input);
+  await user.type(input, "Alicia{enter}");
+
+  expect(screen.getByRole("listitem")).toHaveTextContent("Alicia");
+  expect(screen.queryByText("Alice")).not.toBeInTheDocument();
+});
+
 test("shows a shuffled order list and clear button after sorting", async () => {
   const user = userEvent.setup();
 
