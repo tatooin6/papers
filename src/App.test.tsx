@@ -71,7 +71,7 @@ test("shows a shuffled order list and clear button after sorting", async () => {
   expect(screen.getAllByRole("listitem")).toHaveLength(2);
 });
 
-test("clears the shuffled order list when a participant is removed", async () => {
+test("keeps the shuffled order list when a participant is removed", async () => {
   const user = userEvent.setup();
 
   render(<App />);
@@ -85,7 +85,7 @@ test("clears the shuffled order list when a participant is removed", async () =>
     screen.getAllByRole("button", { name: /eliminar participante/i })[0],
   );
 
-  expect(screen.queryByRole("button", { name: /limpiar lista/i })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: /limpiar lista/i })).toBeInTheDocument();
 });
 
 test("uses Spanish by default", () => {
@@ -178,4 +178,54 @@ test("reorders stragglers and disables edge movement", async () => {
   const stragglers = screen.getAllByRole("listitem");
   expect(stragglers[0]).toHaveTextContent("Bob");
   expect(stragglers[1]).toHaveTextContent("Alice");
+});
+
+test("manually reorders participants and disables edge movement", async () => {
+  const user = userEvent.setup();
+
+  render(<App />);
+
+  const input = screen.getByPlaceholderText(/ingresa un nombre/i);
+  await user.type(input, "Alice{enter}");
+  await user.type(input, "Bob{enter}");
+  await user.click(screen.getByRole("button", { name: /configuracion/i }));
+  await user.click(screen.getByRole("button", { name: /activar orden manual/i }));
+  await user.click(screen.getByRole("button", { name: /listo/i }));
+
+  expect(screen.queryByRole("button", { name: /mover .* hacia arriba/i })).not.toBeInTheDocument();
+
+  await user.click(screen.getByRole("button", { name: /mezclar/i }));
+
+  const drawnOrder = screen.getAllByRole("listitem").map((item) => item.textContent);
+  const [firstParticipant, secondParticipant] = drawnOrder;
+
+  expect(
+    screen.getByRole("button", { name: new RegExp(`mover ${firstParticipant} hacia arriba`, "i") }),
+  ).toBeDisabled();
+  expect(
+    screen.getByRole("button", { name: new RegExp(`mover ${secondParticipant} hacia abajo`, "i") }),
+  ).toBeDisabled();
+
+  await user.click(
+    screen.getByRole("button", { name: new RegExp(`mover ${firstParticipant} hacia abajo`, "i") }),
+  );
+
+  expect(screen.getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+    secondParticipant,
+    firstParticipant,
+  ]);
+});
+
+test("retains an assigned order when a participant is removed", async () => {
+  const user = userEvent.setup();
+
+  render(<App />);
+
+  const input = screen.getByPlaceholderText(/ingresa un nombre/i);
+  await user.type(input, "Alice{enter}");
+  await user.type(input, "Bob{enter}");
+  await user.click(screen.getByRole("button", { name: /mezclar/i }));
+  await user.click(screen.getAllByRole("button", { name: /eliminar participante/i })[0]);
+
+  expect(screen.getByRole("button", { name: /limpiar lista/i })).toBeInTheDocument();
 });

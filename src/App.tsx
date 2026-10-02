@@ -35,6 +35,7 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSuspenseActivated, setIsSuspenseActivated] = useState(false);
   const [useStragglers, setUseStragglers] = useState(true);
+  const [useManualOrder, setUseManualOrder] = useState(false);
   const viewCounterRequested = useRef(false);
   const suspenseTimer = useRef<number | undefined>(undefined);
   const copy = translations[language];
@@ -148,10 +149,13 @@ function App() {
   };
 
   const removeParticipant = (index: number) => {
-    const newArr = [...participants];
-    newArr.splice(index, 1);
-    setParticipants(newArr);
-    setShuffleResult([]);
+    const participantName = participants[index];
+    setParticipants((currentParticipants) =>
+      currentParticipants.filter((_, participantIndex) => participantIndex !== index),
+    );
+    setShuffleResult((currentOrder) =>
+      currentOrder.filter((participant) => participant !== participantName),
+    );
   };
 
   const editParticipant = (index: number) => {
@@ -174,9 +178,14 @@ function App() {
       return;
     }
 
+    const previousName = tempParticipants[editIndex];
     tempParticipants[editIndex] = participantName;
     setParticipants(tempParticipants);
-    setShuffleResult([]);
+    setShuffleResult((currentOrder) =>
+      currentOrder.map((participant) =>
+        participant === previousName ? participantName : participant,
+      ),
+    );
     setParticipantInput("");
     setEditing(false);
   };
@@ -271,6 +280,20 @@ function App() {
         orderedStragglers[index],
       ];
       return orderedStragglers;
+    });
+  };
+
+  const moveParticipant = (index: number, direction: Direction) => {
+    const newIndex = index + direction;
+    if (newIndex < 0 || newIndex >= shuffleResult.length) return;
+
+    setShuffleResult((currentOrder) => {
+      const orderedParticipants = [...currentOrder];
+      [orderedParticipants[index], orderedParticipants[newIndex]] = [
+        orderedParticipants[newIndex],
+        orderedParticipants[index],
+      ];
+      return orderedParticipants;
     });
   };
 
@@ -431,7 +454,57 @@ function App() {
             {shuffleResult.length > 0 && (
               <ol className="m-0 grid list-decimal gap-2 rounded-xl border border-paper-ink/18 bg-paper-background/70 px-6 py-4 text-sm text-paper-ink shadow-[0_14px_35px_rgba(26,26,26,0.1)]">
                 {shuffleResult.map((participant, index) => (
-                  <li key={`${participant}-${index}`}>{participant}</li>
+                  <li key={`${participant}-${index}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <span>{participant}</span>
+                      {useManualOrder && (
+                        <span className="flex flex-wrap justify-end gap-2">
+                          <button
+                            type="button"
+                            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full bg-transparent text-paper-ink transition-colors hover:bg-paper-ink/8 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-paper-focus disabled:cursor-not-allowed disabled:opacity-35"
+                            onClick={() => moveParticipant(index, -1)}
+                            disabled={index === 0}
+                            aria-label={copy.moveParticipantUp.replace("{name}", participant)}
+                          >
+                            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 stroke-current" fill="none" aria-hidden="true">
+                              <path d="M12 18V6m0 0-5 5m5-5 5 5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full bg-transparent text-paper-ink transition-colors hover:bg-paper-ink/8 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-paper-focus disabled:cursor-not-allowed disabled:opacity-35"
+                            onClick={() => moveParticipant(index, 1)}
+                            disabled={index === shuffleResult.length - 1}
+                            aria-label={copy.moveParticipantDown.replace("{name}", participant)}
+                          >
+                            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 stroke-current" fill="none" aria-hidden="true">
+                              <path d="M12 6v12m0 0-5-5m5 5 5-5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => editParticipant(participants.indexOf(participant))}
+                            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full bg-transparent text-paper-ink transition-colors hover:bg-paper-ink/8 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-paper-focus"
+                            aria-label={copy.editParticipant}
+                          >
+                            <svg viewBox="0 0 14 14" className="h-4 w-4 stroke-current" fill="none" aria-hidden="true">
+                              <path d="M10.5 1.5l2 2-9 9-2.5.5.5-2.5 9-9z M9.5 2.5l2 2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => removeParticipant(participants.indexOf(participant))}
+                            className="inline-flex min-h-9 min-w-9 items-center justify-center rounded-full bg-transparent text-paper-ink transition-colors hover:bg-paper-ink/8 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-paper-focus"
+                            aria-label={copy.removeParticipant}
+                          >
+                            <svg viewBox="0 0 14 14" className="h-4 w-4 stroke-current" aria-hidden="true">
+                              <path d="M4 4l6 6m0-6l-6 6" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  </li>
                 ))}
               </ol>
             )}
@@ -653,6 +726,17 @@ function App() {
                   activated={useStragglers}
                   incomingOnClick={() => setUseStragglers(!useStragglers)}
                   label={copy.stragglersToggleLabel}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-row justify-between">
+              <div><p>{copy.manualLabel}</p></div>
+              <div>
+                <Toggle
+                  activated={useManualOrder}
+                  incomingOnClick={() => setUseManualOrder(!useManualOrder)}
+                  label={copy.manualToggleLabel}
                 />
               </div>
             </div>
